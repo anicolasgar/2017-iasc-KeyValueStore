@@ -1,0 +1,19 @@
+{
+  "name": "keyvaluefile",
+  "version": "1.0.0",
+  "description": "Arrancamo con el TP",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "margs": ">0.1.0",
+    "npm-git-install": "^0.3.0"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "express": "^4.16.2"
+  }
+}

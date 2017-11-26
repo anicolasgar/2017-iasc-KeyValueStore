@@ -1,6 +1,10 @@
 var express = require('express');
+var parser = require('body-parser');
 var uniqid = require('uniqid');
+var ioreq = require("socket.io-request");
+
 var config = require('./config');
+var hash = require('./hash');
 
 var args = process.argv.slice(2);
 
@@ -214,12 +218,48 @@ var conectarMaestro = function(ip, puerto) {
 var crearApiRest = function() {
     var app = express();
 
-    app.get('/', function (req, res) {
-        res.send('Hello World!');
+    app.use(parser.urlencoded({ extended: true }));
+    app.use(parser.json());
+
+    app.post('/load', function(req, res){
+        var key = req.body.key;
+        var value = req.body.value;
+
+        var index = hash(key, esclavos.length);
+
+        var esclavo = esclavos[index];
+
+        ioreq(esclavo.socket).request("ADDKEY", { key: key, value: value })
+        .then(function(respuestaEsclavo){
+            console.log(respuestaEsclavo);
+            res.send(respuestaEsclavo);
+        })
+        .catch(function(errorEsclavo){
+            console.error(errorEsclavo);
+            res.send(errorEsclavo);
+        });        
     });
 
-    app.listen(3000, function () {
-        console.log('Example app listening on port 3000!');
+    app.get('/get/:key', function(req, res){
+        var key = req.params.key;
+
+        var index = hash(key, esclavos.length);
+
+        var esclavo = esclavos[index];
+
+        ioreq(esclavo.socket).request("GET", key)
+        .then(function(respuestaEsclavo){
+            console.log(respuestaEsclavo);
+            res.send(respuestaEsclavo);
+        })
+        .catch(function(errorEsclavo){
+            console.error(errorEsclavo);
+            res.send(errorEsclavo);
+        }); 
+    });
+
+    app.listen(config.puertoApiRest, function () {
+        console.log('API REST escuchando en puerto ' + config.puertoApiRest);
     });
 };
 
@@ -251,6 +291,7 @@ var paqueteEsclavo = function (esclavo) {
 if (maestro) {
     crearServerParaOrquestadores();
     crearServerParaEsclavos();
+    crearApiRest();
 }
 else {
     conectarMaestro(config.ipMaestro, config.puertoMaestro);

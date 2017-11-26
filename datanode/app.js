@@ -1,7 +1,10 @@
 var config = require('./config');
+var ioreq = require("socket.io-request");
 
 var identificador;
 var orquestadores = [];
+
+var diccionario = {};
 
 var conectarMaestro = function(ip, puerto) {
     var io = require('socket.io-client');
@@ -46,6 +49,22 @@ var conectarMaestro = function(ip, puerto) {
         orquestadores.splice(index, 1);
 
         conectarMaestro(nuevoMaestro.ip, nuevoMaestro.puerto);
+    });
+
+    ioreq(socket).response("ADDKEY", function(req, res){ // method, handler
+        //res(req.toUpperCase()); // return to client
+        //res.error(new Error('no anda nada con ' + req));
+
+        diccionario[req.key] = req.value;
+
+        res('Clave ' + req.key + ' insertada exitosamente.');
+    });
+
+    ioreq(socket).response("GET", function(req, res){ // method, handler
+        //res(req.toUpperCase()); // return to client
+        //res.error(new Error('no anda nada con ' + req));
+
+        res(diccionario[req]);
     });
 
     socket.emit('CONEXIONESCLAVO', identificador);

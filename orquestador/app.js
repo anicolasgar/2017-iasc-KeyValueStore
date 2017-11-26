@@ -221,6 +221,8 @@ var crearApiRest = function() {
     app.use(parser.urlencoded({ extended: true }));
     app.use(parser.json());
 
+//comando para probar el post
+//wget --post-data "key=clave&value=valor" http://localhost:8084/load
     app.post('/load', function(req, res){
         var key = req.body.key;
         var value = req.body.value;

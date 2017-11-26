@@ -199,6 +199,7 @@ var conectarMaestro = function(ip, puerto) {
         if (nuevoMaestro.identificador == identificador) {
             crearServerParaOrquestadores();
             crearServerParaEsclavos();
+            crearApiRest();
         }
         // Si el nuevo maestro es otro, me conecto a el
         else {
@@ -241,25 +242,6 @@ var crearApiRest = function() {
             res.send(errorEsclavo);
         });        
     });
-
-    app.post('/delete', function(req, res){
-        var key = req.body.key;
-        var value = req.body.value;
-
-        var index = hash(key, esclavos.length);
-
-        var esclavo = esclavos[index];
-
-        ioreq(esclavo.socket).request("DELETEKEY", { key: key })
-        .then(function(respuestaEsclavo){
-            console.log(respuestaEsclavo);
-            res.send(respuestaEsclavo);
-        })
-        .catch(function(errorEsclavo){
-            console.error(errorEsclavo);
-            res.send(errorEsclavo);
-        });        
-    });
     
     app.get('/get/:key', function(req, res){
         var key = req.params.key;
@@ -272,6 +254,62 @@ var crearApiRest = function() {
         .then(function(respuestaEsclavo){
             console.log(respuestaEsclavo);
             res.send(respuestaEsclavo);
+        })
+        .catch(function(errorEsclavo){
+            console.error(errorEsclavo);
+            res.send(errorEsclavo);
+        }); 
+    });
+
+    app.delete('/delete/:key', function(req, res){
+        var key = req.params.key;
+
+        var index = hash(key, esclavos.length);
+
+        var esclavo = esclavos[index];
+
+        ioreq(esclavo.socket).request("DELETE", key)
+        .then(function(respuestaEsclavo){
+            console.log(respuestaEsclavo);
+            res.send(respuestaEsclavo);
+        })
+        .catch(function(errorEsclavo){
+            console.error(errorEsclavo);
+            res.send(errorEsclavo);
+        }); 
+    });
+
+    app.get('/mayores/:valor', function(req, res){
+        var valor = req.params.valor;
+
+        var promesas = esclavos.map(e => ioreq(e.socket).request("MAYORES", valor));
+
+        Promise.all(promesas)
+        .then(function(listaDeRangos){
+            console.log(JSON.stringify(listaDeRangos));
+
+            var mayores = listaDeRangos.reduce((a, b) => a.concat(b));
+
+            res.send(mayores);
+        })
+        .catch(function(errorEsclavo){
+            console.error(errorEsclavo);
+            res.send(errorEsclavo);
+        }); 
+    });
+
+    app.get('/menores/:valor', function(req, res){
+        var valor = req.params.valor;
+
+        var promesas = esclavos.map(e => ioreq(e.socket).request("MENORES", valor));
+
+        Promise.all(promesas)
+        .then(function(listaDeRangos){
+            console.log(JSON.stringify(listaDeRangos));
+
+            var menores = listaDeRangos.reduce((a, b) => a.concat(b));
+
+            res.send(menores);
         })
         .catch(function(errorEsclavo){
             console.error(errorEsclavo);

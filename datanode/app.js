@@ -51,30 +51,54 @@ var conectarMaestro = function(ip, puerto) {
         conectarMaestro(nuevoMaestro.ip, nuevoMaestro.puerto);
     });
 
-    ioreq(socket).response("ADDKEY", function(req, res){ // method, handler
+    ioreq(socket).response("ADDKEY", function(req, res) {
         //res(req.toUpperCase()); // return to client
         //res.error(new Error('no anda nada con ' + req));
 
         diccionario[req.key] = req.value;
 
+        console.log('Clave ' + req.key + ' insertada exitosamente.');
+
         res('Clave ' + req.key + ' insertada exitosamente.');
     });
 
-    ioreq(socket).response("DELETEKEY", function(req, res){ // method, handler
-        if (diccionario[req.key]) {
-            delete diccionario[req.key];
-            res('Clave ' + req.key + ' borrada exitosamente.');
-        }
-        else{
-            res('Clave ' + req.key + ' no existe.');
-        }
+    ioreq(socket).response("DELETE", function(req, res) {
+        delete diccionario[req];
+
+        console.log('Clave ' + req + ' borrada exitosamente.');
+
+        res('Clave ' + req + ' borrada exitosamente.');
     });
     
-    ioreq(socket).response("GET", function(req, res){ // method, handler
+    ioreq(socket).response("GET", function(req, res) {
         //res(req.toUpperCase()); // return to client
         //res.error(new Error('no anda nada con ' + req));
 
+        console.log(diccionario[req]);
+
         res(diccionario[req]);
+    });
+
+    ioreq(socket).response("MAYORES", function(req, res) {
+        //res(req.toUpperCase()); // return to client
+        //res.error(new Error('no anda nada con ' + req));
+
+        var mayores = Object.values(diccionario).filter(v => v > req);
+
+        console.log(JSON.stringify(mayores));
+
+        res(mayores);
+    });
+
+    ioreq(socket).response("MENORES", function(req, res) {
+        //res(req.toUpperCase()); // return to client
+        //res.error(new Error('no anda nada con ' + req));
+
+        var menores = Object.values(diccionario).filter(v => v < req);
+
+        console.log(JSON.stringify(menores));
+
+        res(menores);
     });
 
     socket.emit('CONEXIONESCLAVO', identificador);

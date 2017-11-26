@@ -60,6 +60,16 @@ var conectarMaestro = function(ip, puerto) {
         res('Clave ' + req.key + ' insertada exitosamente.');
     });
 
+    ioreq(socket).response("DELETEKEY", function(req, res){ // method, handler
+        if (diccionario[req.key]) {
+            delete diccionario[req.key];
+            res('Clave ' + req.key + ' borrada exitosamente.');
+        }
+        else{
+            res('Clave ' + req.key + ' no existe.');
+        }
+    });
+    
     ioreq(socket).response("GET", function(req, res){ // method, handler
         //res(req.toUpperCase()); // return to client
         //res.error(new Error('no anda nada con ' + req));

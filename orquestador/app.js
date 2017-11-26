@@ -242,6 +242,25 @@ var crearApiRest = function() {
         });        
     });
 
+    app.post('/delete', function(req, res){
+        var key = req.body.key;
+        var value = req.body.value;
+
+        var index = hash(key, esclavos.length);
+
+        var esclavo = esclavos[index];
+
+        ioreq(esclavo.socket).request("DELETEKEY", { key: key })
+        .then(function(respuestaEsclavo){
+            console.log(respuestaEsclavo);
+            res.send(respuestaEsclavo);
+        })
+        .catch(function(errorEsclavo){
+            console.error(errorEsclavo);
+            res.send(errorEsclavo);
+        });        
+    });
+    
     app.get('/get/:key', function(req, res){
         var key = req.params.key;
 

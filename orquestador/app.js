@@ -2,6 +2,7 @@ var express = require('express');
 var parser = require('body-parser');
 var uniqid = require('uniqid');
 var ioreq = require("socket.io-request");
+var readline = require('readline');
 
 var config = require('./config');
 var hash = require('./hash');
@@ -95,7 +96,7 @@ var crearServerParaEsclavos = function() {
                 esclavo.socket = client;
                 esclavos.push(esclavo);
 
-                client.emit('IDENTIFICADOR', esclavo.identificador);
+                client.emit('IDENTIFICADOR', { identificador: esclavo.identificador, maxCantidadPares: config.maxCantidadPares });
                 
                 // Se notifica a los orquestadores que hay un nuevo nodo esclavo
                 orquestadores.forEach(o => o.socket.emit('NUEVOESCLAVO', paqueteEsclavo(esclavo)));
@@ -142,7 +143,7 @@ var conectarMaestro = function(ip, puerto) {
     socket.on('ORQUESTADORES', function(lista) {        
         orquestadores = lista;
 
-        console.log(JSON.stringify(orquestadores));
+        console.log(JSON.stringify(orquestadores, null, 4));
     });
 
     // Notificacion de nuevo nodo por parte del maestro
@@ -228,18 +229,23 @@ var crearApiRest = function() {
         var key = req.body.key;
         var value = req.body.value;
 
+        if (key.length > config.maxLongitudClave)
+            return res.status(400).send('La longitud de la clave debe tener un máximo de ' + config.maxLongitudClave + ' caracteres.')
+
+        if (value.length > config.maxLongitudValor)
+            return res.status(400).send('La longitud del valor debe tener un máximo de ' + config.maxLongitudValor + ' caracteres.')
+
         var index = hash(key, esclavos.length);
 
         var esclavo = esclavos[index];
 
         ioreq(esclavo.socket).request("ADDKEY", { key: key, value: value })
-        .then(function(respuestaEsclavo){
-            console.log(respuestaEsclavo);
-            res.send(respuestaEsclavo);
+        .then(function() {
+            res.sendStatus(200);
         })
         .catch(function(errorEsclavo){
             console.error(errorEsclavo);
-            res.send(errorEsclavo);
+            res.status(500).send(errorEsclavo);
         });        
     });
     
@@ -251,13 +257,17 @@ var crearApiRest = function() {
         var esclavo = esclavos[index];
 
         ioreq(esclavo.socket).request("GET", key)
-        .then(function(respuestaEsclavo){
+        .then(function(respuestaEsclavo) {
             console.log(respuestaEsclavo);
-            res.send(respuestaEsclavo);
+
+            if (respuestaEsclavo === undefined)
+                res.sendStatus(404);
+            else
+                res.status(200).send(respuestaEsclavo);
         })
         .catch(function(errorEsclavo){
             console.error(errorEsclavo);
-            res.send(errorEsclavo);
+            res.status(500).send(errorEsclavo);
         }); 
     });
 
@@ -269,13 +279,12 @@ var crearApiRest = function() {
         var esclavo = esclavos[index];
 
         ioreq(esclavo.socket).request("DELETE", key)
-        .then(function(respuestaEsclavo){
-            console.log(respuestaEsclavo);
-            res.send(respuestaEsclavo);
+        .then(function() {
+            res.sendStatus(200);
         })
         .catch(function(errorEsclavo){
             console.error(errorEsclavo);
-            res.send(errorEsclavo);
+            res.status(500).send(errorEsclavo);
         }); 
     });
 
@@ -290,11 +299,11 @@ var crearApiRest = function() {
 
             var mayores = listaDeRangos.reduce((a, b) => a.concat(b));
 
-            res.send(mayores);
+            res.status(200).send(mayores);
         })
         .catch(function(errorEsclavo){
             console.error(errorEsclavo);
-            res.send(errorEsclavo);
+            res.status(500).send(errorEsclavo);
         }); 
     });
 
@@ -309,11 +318,11 @@ var crearApiRest = function() {
 
             var menores = listaDeRangos.reduce((a, b) => a.concat(b));
 
-            res.send(menores);
+            res.status(200).send(menores);
         })
         .catch(function(errorEsclavo){
             console.error(errorEsclavo);
-            res.send(errorEsclavo);
+            res.status(500).send(errorEsclavo);
         }); 
     });
 
@@ -346,6 +355,19 @@ var paqueteEsclavo = function (esclavo) {
     };
 };
 
+var rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: false
+});
+  
+rl.on('line', function(line) {
+    switch (line) {
+        case 'orquestadores':
+            console.log(JSON.stringify(orquestadores.map(paqueteOrquestador), null, 4));
+            break;
+    };
+})
 
 if (maestro) {
     crearServerParaOrquestadores();

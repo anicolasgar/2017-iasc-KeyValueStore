@@ -2,6 +2,7 @@ var config = require('./config');
 var ioreq = require("socket.io-request");
 
 var identificador;
+var maxCantidadPares;
 var orquestadores = [];
 
 var diccionario = {};
@@ -14,9 +15,10 @@ var conectarMaestro = function(ip, puerto) {
         console.log('Conectado a orquestador maestro.');
     });
 
-    socket.on('IDENTIFICADOR', function(nuevoId) {
-        console.log(nuevoId);
-        identificador = nuevoId;
+    socket.on('IDENTIFICADOR', function(datosInicializacion) {
+        console.log(datosInicializacion.identificador);
+        identificador = datosInicializacion.identificador;
+        maxCantidadPares = datosInicializacion.maxCantidadPares;
     });
 
     socket.on('ORQUESTADORES', function(lista) {        
@@ -55,6 +57,9 @@ var conectarMaestro = function(ip, puerto) {
         //res(req.toUpperCase()); // return to client
         //res.error(new Error('no anda nada con ' + req));
 
+        if (Object.keys(diccionario).length >= maxCantidadPares && !diccionario.hasOwnProperty(req.key))
+            return res.error(new Error('La capacidad del nodo ha llego a su limite.'))
+
         diccionario[req.key] = req.value;
 
         console.log('Clave ' + req.key + ' insertada exitosamente.');
@@ -73,7 +78,7 @@ var conectarMaestro = function(ip, puerto) {
     ioreq(socket).response("GET", function(req, res) {
         //res(req.toUpperCase()); // return to client
         //res.error(new Error('no anda nada con ' + req));
-
+        
         console.log(diccionario[req]);
 
         res(diccionario[req]);

@@ -2,8 +2,14 @@
 'use strict';
 const program = require('commander');
 var request = require('request');
-var config = require('../orquestador/config');
+var config = require('./config');
 var randomWords = require('random-words');
+
+
+config.orquestadores.forEach(function(){
+    //conectarse al maestro
+  });
+  
 
 var loadfunct = (clave,valor) => {
     request({ method: 'POST', url:'http://localhost:8084/load', form: {key:clave,value:valor}}, function(error, response,body) {

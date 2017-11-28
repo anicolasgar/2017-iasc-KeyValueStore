@@ -108,12 +108,14 @@ var crearServerParaEsclavos = function() {
             };
         });
 
-        // Si el nodo esclavo se cae, se lo quita de la lista y se notifica a los orquestadores
+        // Si el nodo esclavo se cae, se lo quita de la lista y se notifica a los orquestadores, ademas se redistribuyen los datos
         client.on('disconnect', function() {
             var index = esclavos.indexOf(esclavo);
             esclavos.splice(index, 1);
 
             orquestadores.forEach(o => o.socket.emit('QUITARESCLAVO', esclavo.identificador));
+
+            redistribuirDatos();
         });
     });
 
@@ -301,6 +303,23 @@ var crearApiRest = function() {
         console.log('API REST escuchando en puerto ' + config.puertoApiRest);
     });
 };
+
+
+var redistribuirDatos = function () {
+    /*var respuestas = [];
+
+    console.log('Comenzando a redistribuir.');
+    
+    esclavos.forEach(function (esclavo, indice) {
+        esclavos.map(e => ioreq(e.socket).request("PARPORINDICE", { indice: indice, limite: esclavos.length }));
+    });    
+
+    Promise.all(respuestas)
+    .then(function () {
+        console.log('Redistribucion finalizada.');
+    });*/
+};
+
 
 
 var paqueteOrquestador = function (orquestador) {

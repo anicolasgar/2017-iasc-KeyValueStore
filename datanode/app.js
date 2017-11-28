@@ -1,4 +1,5 @@
 var config = require('./config');
+var hash = require('./hash');
 var ioreq = require("socket.io-request");
 var readline = require('readline');
 
@@ -76,6 +77,34 @@ var conectarMaestro = function(ip, puerto) {
 
         res(menores);
     });
+
+    /*ioreq(socket).response("DATOSNOCORRESPONDIENTES", function(req, res) {
+        var datosNoCorrespondientes = {};
+
+        for (const prop in diccionario) {
+            if (hash(prop, req.limite) != req.indice)
+                datosNoCorrespondientes[prop] = diccionario[prop];
+        };
+
+        res(datosNoCorrespondientes);
+    });
+
+    ioreq(socket).response("DICCIONARIO", function(nuevosDatos, res) {
+        for (const prop in nuevosDatos) {
+            diccionario[prop] = nuevosDatos[prop];
+        };
+
+        res('Datos agregados con exito.');
+    });
+
+    ioreq(socket).response("BORRARDATOSNOCORRESPONDIENTES", function(req, res) {
+        for (const prop in diccionario) {
+            if (hash(prop, req.limite) != req.indice)
+                delete diccionario[prop];
+        };
+
+        res('Datos eliminados con exito.');
+    });*/
 
     socket.emit('CONEXIONESCLAVO', identificador);
 };

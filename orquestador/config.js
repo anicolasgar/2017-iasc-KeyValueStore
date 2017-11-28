@@ -10,8 +10,6 @@ var config = {
     maxLongitudClave: 50,
     maxLongitudValor: 50,
     maxCantidadPares: 2,
-    
-    list: ['http://localhost:8084','http://localhost:8080','http://localhost:8081']
 };
 
 module.exports = config;

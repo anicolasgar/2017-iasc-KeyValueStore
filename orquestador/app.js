@@ -1,3 +1,5 @@
+require('events').EventEmitter.defaultMaxListeners = 0;
+
 var express = require('express');
 var parser = require('body-parser');
 var uniqid = require('uniqid');
@@ -115,7 +117,8 @@ var crearServerParaEsclavos = function() {
 
             orquestadores.forEach(o => o.socket.emit('QUITARESCLAVO', esclavo.identificador));
 
-            redistribuirDatos();
+            if (esclavos.length > 1)
+                redistribuirDatos();
         });
     });
 
@@ -306,21 +309,37 @@ var crearApiRest = function() {
 
 
 var redistribuirDatos = function () {
-    /*var respuestas = [];
-
     console.log('Comenzando a redistribuir.');
     
-    esclavos.forEach(function (esclavo, indice) {
-        esclavos.map(e => ioreq(e.socket).request("PARPORINDICE", { indice: indice, limite: esclavos.length }));
-    });    
+    var respuestasDistribucion = esclavos.map(redistribucionEnEsclavo);
 
-    Promise.all(respuestas)
+    Promise.all(respuestasDistribucion)
     .then(function () {
         console.log('Redistribucion finalizada.');
-    });*/
+    });
 };
 
+var redistribucionEnEsclavo = function (esclavo, indice) {
+    return new Promise(function (resolve, reject) {
+        var otrosEsclavos = esclavos.filter(e => e != esclavo);
 
+        Promise.all(otrosEsclavos.map(e => ioreq(e.socket).request("PARESNUEVOHASH", { indice: indice, limite: esclavos.length })))
+        .then(function (listaConjuntoDePares) {
+            var listaDePares = listaConjuntoDePares.reduce((a, b) => a.concat(b));
+
+            return ioreq(esclavo.socket).request("ADDLISTA", listaDePares);
+        })
+        .then(function () {
+            return Promise.all(otrosEsclavos.map(e => ioreq(e.socket).request("BORRARPARESNUEVOHASH", { indice: indice, limite: esclavos.length })));
+        })
+        .then(function (respuestas) {
+            resolve(respuestas);
+        })
+        .catch(function (err) {
+            reject(err);
+        });
+    });
+};
 
 var paqueteOrquestador = function (orquestador) {
     return {

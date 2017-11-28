@@ -9,7 +9,7 @@ var config = {
 
     maxLongitudClave: 50,
     maxLongitudValor: 50,
-    maxCantidadPares: 2,
+    maxCantidadPares: 10000
 };
 
 module.exports = config;

@@ -78,33 +78,31 @@ var conectarMaestro = function(ip, puerto) {
         res(menores);
     });
 
-    /*ioreq(socket).response("DATOSNOCORRESPONDIENTES", function(req, res) {
-        var datosNoCorrespondientes = {};
+    ioreq(socket).response("PARESNUEVOHASH", function(req, res) {
+        var paresAMigrar = [];
 
         for (const prop in diccionario) {
-            if (hash(prop, req.limite) != req.indice)
-                datosNoCorrespondientes[prop] = diccionario[prop];
+            if (hash(prop, req.limite) == req.indice)
+                paresAMigrar.push({ clave: prop, valor: diccionario[prop] });
         };
 
-        res(datosNoCorrespondientes);
+        res(paresAMigrar);
     });
 
-    ioreq(socket).response("DICCIONARIO", function(nuevosDatos, res) {
-        for (const prop in nuevosDatos) {
-            diccionario[prop] = nuevosDatos[prop];
-        };
+    ioreq(socket).response("ADDLISTA", function(listaPares, res) {
+        listaPares.forEach(par => diccionario[par.clave] = par.valor);
 
         res('Datos agregados con exito.');
     });
 
-    ioreq(socket).response("BORRARDATOSNOCORRESPONDIENTES", function(req, res) {
+    ioreq(socket).response("BORRARPARESNUEVOHASH", function(req, res) {
         for (const prop in diccionario) {
-            if (hash(prop, req.limite) != req.indice)
+            if (hash(prop, req.limite) == req.indice)
                 delete diccionario[prop];
         };
 
         res('Datos eliminados con exito.');
-    });*/
+    });
 
     socket.emit('CONEXIONESCLAVO', identificador);
 };
@@ -132,6 +130,10 @@ rl.on('line', function(line) {
             for (const prop in diccionario) {
                 console.log(`${prop} = ${diccionario[prop]}`);
             };
+            break;
+
+        case 'count':
+            console.log(Object.keys(diccionario).length);
             break;
     };
 });

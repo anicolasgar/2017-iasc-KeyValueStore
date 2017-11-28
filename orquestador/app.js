@@ -69,8 +69,6 @@ var crearServerParaOrquestadores = function() {
 
             orquestadores.forEach(o => o.socket.emit('QUITARORQUESTADOR', orquestador.identificador));
             esclavos.forEach(e => e.socket.emit('QUITARORQUESTADOR', orquestador.identificador));
-
-            console.log(orquestadores.length);
         });
     });
 
@@ -116,8 +114,6 @@ var crearServerParaEsclavos = function() {
             esclavos.splice(index, 1);
 
             orquestadores.forEach(o => o.socket.emit('QUITARESCLAVO', esclavo.identificador));
-
-            console.log(esclavos.length);
         });
     });
 
@@ -135,22 +131,17 @@ var conectarMaestro = function(ip, puerto) {
     
     // Asignacion de id por parte del maestro
     socket.on('IDENTIFICADOR', function(nuevoId) {
-        console.log(nuevoId);
         identificador = nuevoId;
     });
 
     // Seteo de orquestadores enviado por el maestro
     socket.on('ORQUESTADORES', function(lista) {        
         orquestadores = lista;
-
-        console.log(JSON.stringify(orquestadores, null, 4));
     });
 
     // Notificacion de nuevo nodo por parte del maestro
     socket.on('NUEVOORQUESTADOR', function(orquestador) {        
         orquestadores.push(orquestador);
-
-        console.log(JSON.stringify(orquestadores));
     });
 
     // Notificacion del maestro sobre orquestador caido
@@ -158,35 +149,26 @@ var conectarMaestro = function(ip, puerto) {
         var orquestador = orquestadores.find(o => o.identificador == identificador);
         var index = orquestadores.indexOf(orquestador);
         orquestadores.splice(index, 1);
-
-        console.log(JSON.stringify(orquestadores));
     });
 
     // Seteo de esclavos por parte del maestro
     socket.on('ESCLAVOS', function(lista) {        
         esclavos = lista;
-
-        console.log(JSON.stringify(esclavos));
     });
 
     // Nuevo esclavo
     socket.on('NUEVOESCLAVO', function(esclavo) {        
         esclavos.push(esclavo);
-
-        console.log(JSON.stringify(esclavos));
     });
 
     socket.on('QUITARESCLAVO', function(identificador) {
         var esclavo = esclavos.find(e => e.identificador == identificador);
         var index = esclavos.indexOf(esclavo);
         esclavos.splice(index, 1);
-
-        console.log(JSON.stringify(esclavos));
     });
 
     // Callback que se ejecuta si se cae el nodo maestro
     socket.on('disconnect', function() {
-        console.log('murio papa');
         socket.close();
 
         // El nuevo nodo maestro, se elige por orden alfabetico del identificador...
@@ -225,7 +207,7 @@ var crearApiRest = function() {
 
 //comando para probar el post
 //wget --post-data "key=clave&value=valor" http://localhost:8084/load
-    app.post('/load', function(req, res){
+    app.post('/load', function(req, res) {
         var key = req.body.key;
         var value = req.body.value;
 
@@ -243,13 +225,12 @@ var crearApiRest = function() {
         .then(function() {
             res.sendStatus(200);
         })
-        .catch(function(errorEsclavo){
-            console.error(errorEsclavo);
+        .catch(function(errorEsclavo) {
             res.status(500).send(errorEsclavo);
         });        
     });
     
-    app.get('/get/:key', function(req, res){
+    app.get('/get/:key', function(req, res) {
         var key = req.params.key;
 
         var index = hash(key, esclavos.length);
@@ -258,20 +239,17 @@ var crearApiRest = function() {
 
         ioreq(esclavo.socket).request("GET", key)
         .then(function(respuestaEsclavo) {
-            console.log(respuestaEsclavo);
-
             if (respuestaEsclavo === undefined)
                 res.sendStatus(404);
             else
                 res.status(200).send(respuestaEsclavo);
         })
-        .catch(function(errorEsclavo){
-            console.error(errorEsclavo);
+        .catch(function(errorEsclavo) {
             res.status(500).send(errorEsclavo);
         }); 
     });
 
-    app.delete('/delete/:key', function(req, res){
+    app.delete('/delete/:key', function(req, res) {
         var key = req.params.key;
 
         var index = hash(key, esclavos.length);
@@ -282,27 +260,23 @@ var crearApiRest = function() {
         .then(function() {
             res.sendStatus(200);
         })
-        .catch(function(errorEsclavo){
-            console.error(errorEsclavo);
+        .catch(function(errorEsclavo) {
             res.status(500).send(errorEsclavo);
         }); 
     });
 
-    app.get('/mayores/:valor', function(req, res){
+    app.get('/mayores/:valor', function(req, res) {
         var valor = req.params.valor;
 
         var promesas = esclavos.map(e => ioreq(e.socket).request("MAYORES", valor));
 
         Promise.all(promesas)
-        .then(function(listaDeRangos){
-            console.log(JSON.stringify(listaDeRangos));
-
+        .then(function(listaDeRangos) {
             var mayores = listaDeRangos.reduce((a, b) => a.concat(b));
 
             res.status(200).send(mayores);
         })
-        .catch(function(errorEsclavo){
-            console.error(errorEsclavo);
+        .catch(function(errorEsclavo) {
             res.status(500).send(errorEsclavo);
         }); 
     });
@@ -313,15 +287,12 @@ var crearApiRest = function() {
         var promesas = esclavos.map(e => ioreq(e.socket).request("MENORES", valor));
 
         Promise.all(promesas)
-        .then(function(listaDeRangos){
-            console.log(JSON.stringify(listaDeRangos));
-
+        .then(function(listaDeRangos) {
             var menores = listaDeRangos.reduce((a, b) => a.concat(b));
 
             res.status(200).send(menores);
         })
-        .catch(function(errorEsclavo){
-            console.error(errorEsclavo);
+        .catch(function(errorEsclavo) {
             res.status(500).send(errorEsclavo);
         }); 
     });
@@ -355,6 +326,17 @@ var paqueteEsclavo = function (esclavo) {
     };
 };
 
+
+if (maestro) {
+    crearServerParaOrquestadores();
+    crearServerParaEsclavos();
+    crearApiRest();
+}
+else {
+    conectarMaestro(config.ipMaestro, config.puertoMaestro);
+};
+
+
 var rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -366,14 +348,13 @@ rl.on('line', function(line) {
         case 'orquestadores':
             console.log(JSON.stringify(orquestadores.map(paqueteOrquestador), null, 4));
             break;
-    };
-})
 
-if (maestro) {
-    crearServerParaOrquestadores();
-    crearServerParaEsclavos();
-    crearApiRest();
-}
-else {
-    conectarMaestro(config.ipMaestro, config.puertoMaestro);
-};
+        case 'esclavos':
+            console.log(JSON.stringify(esclavos.map(paqueteEsclavo), null, 4));
+            break;
+
+        case 'identificador':
+            console.log(identificador);
+            break;
+    };
+});

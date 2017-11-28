@@ -3,6 +3,7 @@
 const program = require('commander');
 var request = require('request');
 var config = require('../orquestador/config');
+var randomWords = require('random-words');
 
 var loadfunct = (clave,valor) => {
     request({ method: 'POST', url:'http://localhost:8084/load', form: {key:clave,value:valor}}, function(error, response,body) {

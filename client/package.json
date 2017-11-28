@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "commander": "^2.12.1",
+    "random-words": "0.0.1",
     "request": "^2.83.0"
   }
 }

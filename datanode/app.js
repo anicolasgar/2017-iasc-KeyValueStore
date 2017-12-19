@@ -10,6 +10,9 @@ var orquestadores = [];
 var diccionario = {};
 
 var conectarMaestro = function(ip, puerto) {
+    console.log('Intentando conectarse a orquestador maestro..');
+    console.log('http://' + ip + ':' + puerto);
+
     var io = require('socket.io-client');
     var socket = io.connect('http://' + ip + ':' + puerto, {reconnect: true});
 
@@ -52,7 +55,7 @@ var conectarMaestro = function(ip, puerto) {
             return res.error(new Error('La capacidad del nodo ha llego a su limite.'))
 
         diccionario[req.key] = req.value;
-
+        console.log('Clave ' + req.key + ' insertada exitosamente.');
         res('Clave ' + req.key + ' insertada exitosamente.');
     });
 
@@ -115,25 +118,31 @@ var rl = readline.createInterface({
     output: process.stdout,
     terminal: false
 });
-  
+
 rl.on('line', function(line) {
     switch (line) {
         case 'orquestadores':
-            console.log(JSON.stringify(orquestadores, null, 4));
-            break;
+        console.log(JSON.stringify(orquestadores, null, 4));
+        break;
 
         case 'identificador':
-            console.log(identificador);
-            break;
+        console.log("\n");
+        console.log("Identificador: \n");
+        console.log(identificador);
+        break;
 
         case 'datos':
-            for (const prop in diccionario) {
-                console.log(`${prop} = ${diccionario[prop]}`);
-            };
-            break;
+        console.log("\n");
+        console.log("Los datos almacenados en este datanode son: \n");
+        for (const prop in diccionario) {
+            console.log(`${prop} = ${diccionario[prop]}`);
+        };
+        break;
 
         case 'count':
-            console.log(Object.keys(diccionario).length);
-            break;
+        console.log("\n");
+        console.log("Count:");
+        console.log(Object.keys(diccionario).length);
+        break;
     };
 });

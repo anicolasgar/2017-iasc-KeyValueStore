@@ -185,12 +185,14 @@ var conectarMaestro = function(ip, puerto) {
 
         // Si el nuevo nodo maestro soy yo, creo los sockets para escuchar
         if (nuevoMaestro.identificador == identificador) {
+            console.log("\nSoy el nuevo nodo master, preparo entorno..");
             crearServerParaOrquestadores();
             crearServerParaEsclavos();
             crearApiRest();
         }
         // Si el nuevo maestro es otro, me conecto a el
         else {
+            console.log("\nComo no soy el nuevo nodo master, me conecto a otro..");
             conectarMaestro(nuevoMaestro.ip, nuevoMaestro.puertoParaOrquestadores);
         };
     });
@@ -205,106 +207,106 @@ var conectarMaestro = function(ip, puerto) {
 };
 
 var crearApiRest = function() {
-    var app = express();
+ var app = express();
 
-    app.use(parser.urlencoded({ extended: true }));
-    app.use(parser.json());
+ app.use(parser.urlencoded({ extended: true }));
+ app.use(parser.json());
 
-//comando para probar el post
-//wget --post-data "key=clave&value=valor" http://localhost:8084/load
-    app.post('/load', function(req, res) {
-        var key = req.body.key;
-        var value = req.body.value;
+   //comando para probar el post
+   //wget --post-data "key=clave&value=valor" http://localhost:8084/load
+   app.post('/load', function(req, res) {
+    var key = req.body.key;
+    var value = req.body.value;
 
-        if (key.length > config.maxLongitudClave)
-            return res.status(400).send('La longitud de la clave debe tener un máximo de ' + config.maxLongitudClave + ' caracteres.')
+    if (key.length > config.maxLongitudClave)
+        return res.status(400).send('La longitud de la clave debe tener un máximo de ' + config.maxLongitudClave + ' caracteres.')
 
-        if (value.length > config.maxLongitudValor)
-            return res.status(400).send('La longitud del valor debe tener un máximo de ' + config.maxLongitudValor + ' caracteres.')
+    if (value.length > config.maxLongitudValor)
+        return res.status(400).send('La longitud del valor debe tener un máximo de ' + config.maxLongitudValor + ' caracteres.')
 
-        var index = hash(key, esclavos.length);
+    var index = hash(key, esclavos.length);
 
-        var esclavo = esclavos[index];
+    var esclavo = esclavos[index];
 
-        ioreq(esclavo.socket).request("ADDKEY", { key: key, value: value })
-        .then(function() {
-            res.sendStatus(200);
-        })
-        .catch(function(errorEsclavo) {
-            res.status(500).send(errorEsclavo);
-        });        
-    });
-    
-    app.get('/get/:key', function(req, res) {
-        var key = req.params.key;
+    ioreq(esclavo.socket).request("ADDKEY", { key: key, value: value })
+    .then(function() {
+        res.sendStatus(200);
+    })
+    .catch(function(errorEsclavo) {
+        res.status(500).send(errorEsclavo);
+    });        
+});
 
-        var index = hash(key, esclavos.length);
+   app.get('/get/:key', function(req, res) {
+    var key = req.params.key;
 
-        var esclavo = esclavos[index];
+    var index = hash(key, esclavos.length);
 
-        ioreq(esclavo.socket).request("GET", key)
-        .then(function(respuestaEsclavo) {
-            if (respuestaEsclavo === undefined)
-                res.sendStatus(404);
-            else
-                res.status(200).send(respuestaEsclavo);
-        })
-        .catch(function(errorEsclavo) {
-            res.status(500).send(errorEsclavo);
-        }); 
-    });
+    var esclavo = esclavos[index];
 
-    app.delete('/delete/:key', function(req, res) {
-        var key = req.params.key;
+    ioreq(esclavo.socket).request("GET", key)
+    .then(function(respuestaEsclavo) {
+        if (respuestaEsclavo === undefined)
+            res.sendStatus(404);
+        else
+            res.status(200).send(respuestaEsclavo);
+    })
+    .catch(function(errorEsclavo) {
+        res.status(500).send(errorEsclavo);
+    }); 
+});
 
-        var index = hash(key, esclavos.length);
+   app.delete('/delete/:key', function(req, res) {
+    var key = req.params.key;
 
-        var esclavo = esclavos[index];
+    var index = hash(key, esclavos.length);
 
-        ioreq(esclavo.socket).request("DELETE", key)
-        .then(function() {
-            res.sendStatus(200);
-        })
-        .catch(function(errorEsclavo) {
-            res.status(500).send(errorEsclavo);
-        }); 
-    });
+    var esclavo = esclavos[index];
 
-    app.get('/mayores/:valor', function(req, res) {
-        var valor = req.params.valor;
+    ioreq(esclavo.socket).request("DELETE", key)
+    .then(function() {
+        res.sendStatus(200);
+    })
+    .catch(function(errorEsclavo) {
+        res.status(500).send(errorEsclavo);
+    }); 
+});
 
-        var promesas = esclavos.map(e => ioreq(e.socket).request("MAYORES", valor));
+   app.get('/mayores/:valor', function(req, res) {
+    var valor = req.params.valor;
 
-        Promise.all(promesas)
-        .then(function(listaDeRangos) {
-            var mayores = listaDeRangos.reduce((a, b) => a.concat(b));
+    var promesas = esclavos.map(e => ioreq(e.socket).request("MAYORES", valor));
 
-            res.status(200).send(mayores);
-        })
-        .catch(function(errorEsclavo) {
-            res.status(500).send(errorEsclavo);
-        }); 
-    });
+    Promise.all(promesas)
+    .then(function(listaDeRangos) {
+        var mayores = listaDeRangos.reduce((a, b) => a.concat(b));
 
-    app.get('/menores/:valor', function(req, res){
-        var valor = req.params.valor;
+        res.status(200).send(mayores);
+    })
+    .catch(function(errorEsclavo) {
+        res.status(500).send(errorEsclavo);
+    }); 
+});
 
-        var promesas = esclavos.map(e => ioreq(e.socket).request("MENORES", valor));
+   app.get('/menores/:valor', function(req, res){
+    var valor = req.params.valor;
 
-        Promise.all(promesas)
-        .then(function(listaDeRangos) {
-            var menores = listaDeRangos.reduce((a, b) => a.concat(b));
+    var promesas = esclavos.map(e => ioreq(e.socket).request("MENORES", valor));
 
-            res.status(200).send(menores);
-        })
-        .catch(function(errorEsclavo) {
-            res.status(500).send(errorEsclavo);
-        }); 
-    });
+    Promise.all(promesas)
+    .then(function(listaDeRangos) {
+        var menores = listaDeRangos.reduce((a, b) => a.concat(b));
 
-    app.listen(config.puertoApiRest, function () {
-        console.log('API REST escuchando en puerto ' + config.puertoApiRest);
-    });
+        res.status(200).send(menores);
+    })
+    .catch(function(errorEsclavo) {
+        res.status(500).send(errorEsclavo);
+    }); 
+});
+
+   app.listen(config.puertoApiRest, function () {
+    console.log('API REST escuchando en puerto ' + config.puertoApiRest);
+});
 };
 
 
@@ -364,7 +366,7 @@ var paqueteEsclavo = function (esclavo) {
     };
 };
 
-
+console.log("is maester?: "+maestro);
 if (maestro) {
     crearServerParaOrquestadores();
     crearServerParaEsclavos();
@@ -380,19 +382,25 @@ var rl = readline.createInterface({
     output: process.stdout,
     terminal: false
 });
-  
+
 rl.on('line', function(line) {
     switch (line) {
         case 'orquestadores':
-            console.log(JSON.stringify(orquestadores.map(paqueteOrquestador), null, 4));
-            break;
+        console.log("\n");
+        console.log("Orquestadores: ");
+        console.log(JSON.stringify(orquestadores.map(paqueteOrquestador), null, 4));
+        break;
 
         case 'esclavos':
-            console.log(JSON.stringify(esclavos.map(paqueteEsclavo), null, 4));
-            break;
+        console.log("\n");
+        console.log("Esclavos: ");
+        console.log(JSON.stringify(esclavos.map(paqueteEsclavo), null, 4));
+        break;
 
         case 'identificador':
-            console.log(identificador);
-            break;
+        console.log("\n");
+        console.log("ID: ");
+        console.log(identificador);
+        break;
     };
 });

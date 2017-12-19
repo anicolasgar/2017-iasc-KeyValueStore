@@ -7,9 +7,9 @@ var config = {
     ipMaestro: 'localhost',
     puertoMaestro: '8080',
 
-    maxLongitudClave: 50,
+    maxLongitudClave: 10,
     maxLongitudValor: 50,
-    maxCantidadPares: 10000
+    maxCantidadPares: 8
 };
 
 module.exports = config;

@@ -1,5 +1,12 @@
 # KeyValueStore
 
+## Files
+To start..
+orquestador/app.js master -> orquestador master
+orquestador/app.js  -> orquestador slave
+datanode/app.js master -> datanode master
+client/node.js -> client
+
 ## API REST
 
 ### LOAD  
